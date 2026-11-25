@@ -46,6 +46,7 @@ button{cursor:pointer}
 .tab svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;flex:none}
 .tab.on{color:var(--cy2);border-color:var(--line);background:var(--cyA);box-shadow:0 0 14px hsla(var(--h),100%,64%,.18) inset}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--cy);box-shadow:0 0 8px var(--cy);flex:none}
+.dot{transition:transform .15s}.dot.clap{outline:2px solid var(--cy);outline-offset:2px}
 .dot.off{background:var(--warn);box-shadow:0 0 8px var(--warn)}
 .clock{font:15px/1 var(--mono);color:var(--cy2)}
 .ib{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;flex:none}
@@ -571,31 +572,45 @@ function initHolo(){
     const ren=new T.WebGLRenderer({antialias:true,alpha:true});ren.setPixelRatio(Math.min(devicePixelRatio||1,2));box.appendChild(ren.domElement);
     const scene=new T.Scene();const cam=new T.PerspectiveCamera(38,1,.1,200);cam.position.set(0,.2,7.4);
     const N=reduce?3500:7000,tgt=new Float32Array(N*3),pos=new Float32Array(N*3),colr=new Float32Array(N*3),ph=new Float32Array(N),mouth=new Uint8Array(N),kind=new Uint8Array(N);
-    let i=0;const R=Math.random;
-    const headN=Math.floor(N*.66),neckN=Math.floor(N*.07);
-    for(;i<headN;i++){
-      const u=R()*2-1,th=R()*6.283,s=Math.sqrt(1-u*u);let x=s*Math.sin(th)*.8,y=u*1.12,z=s*Math.cos(th)*.94;
-      if(y<-.15){const k=1-Math.min(.55,(-.15-y)*.5);x*=k;z*=(.85+.15*k)}
-      if(z<0)z*=1.06;
-      if(z>0){z+=.24*Math.exp(-(x*x/.005+(y+.08)**2/.035));z+=.05*Math.exp(-((y-.28)**2/.003))*(Math.abs(x)<.5?1:0);
-        z-=.07*Math.exp(-(((Math.abs(x)-.27)**2)/.005+((y-.14)**2)/.004));z+=.04*Math.exp(-(x*x/.02+(y+.62)**2/.01))}
-      if(z>.55&&Math.abs(x)<.26&&y>-.5&&y<-.3)mouth[i]=1;
-      tgt[i*3]=x;tgt[i*3+1]=y+.55;tgt[i*3+2]=z;kind[i]=0;
+    let i=0;const R=Math.random;const nrm=new Float32Array(N);
+    const cl=(v,a,b)=>Math.max(a,Math.min(b,v)),ss=(a,b,v)=>{const t=cl((v-a)/(b-a),0,1);return t*t*(3-2*t)};
+    const put=(x,y,z,k,n)=>{tgt[i*3]=x;tgt[i*3+1]=y+.72;tgt[i*3+2]=z;kind[i]=k;nrm[i]=n;i++};
+    const nH=Math.floor(N*.58),nE=Math.floor(N*.03),nY=Math.floor(N*.025),nN=Math.floor(N*.07);
+    while(i<nH){
+      const u=R()*2-1,th=R()*6.283,sq=Math.sqrt(1-u*u),nx=sq*Math.sin(th),ny=u,nz=sq*Math.cos(th);
+      let x=nx*.75,y=ny*(ny>0?.97:1.04),z=nz*.9;
+      if(y<-.05){const k=-.05-y;x*=1-k*.45;z*=z>0?1-k*.1:1-k*.38}
+      if(z<0&&y>-.1)z*=1.1;
+      if(y>.55&&z>0)z*=1-(y-.55)*.25;
+      if(z>.1){const ax=Math.abs(x);
+        z+=.21*Math.exp(-x*x/.0032)*ss(.24,-.26,y)*(y>-.33?1:0);
+        z+=.07*Math.exp(-(x*x/.014+(y+.3)**2/.004));
+        z-=.1*Math.exp(-((ax-.28)**2/.006+(y-.12)**2/.005));
+        z+=.06*Math.exp(-((y-.29)**2/.003))*(ax<.48?1:0);
+        z+=.05*Math.exp(-((ax-.44)**2/.012+(y+.03)**2/.012));
+        z+=.055*Math.exp(-(x*x/.022+(y+.47)**2/.0016));
+        z+=.05*Math.exp(-(x*x/.02+(y+.585)**2/.0016));
+        z-=.045*Math.exp(-(x*x/.03+(y+.53)**2/.0004));
+        z+=.11*Math.exp(-(x*x/.025+(y+.86)**2/.014));
+        if(z>.5&&ax<.22&&y<-.53&&y>-.65)mouth[i]=1;}
+      put(x,y,z,0,nz);
     }
-    for(;i<headN+neckN;i++){const a=R()*6.283,y=-.55-R()*.75;tgt[i*3]=Math.cos(a)*.36;tgt[i*3+1]=y+.55;tgt[i*3+2]=Math.sin(a)*.34;kind[i]=1}
-    for(;i<N;i++){const a=R()*Math.PI,b=R()*6.283;let x=Math.cos(b)*Math.sin(a)*1.75,y=Math.cos(a)*.6,z=Math.sin(b)*Math.sin(a)*.62;if(y<0)y*=.3;tgt[i*3]=x;tgt[i*3+1]=y-1.9+.55;tgt[i*3+2]=z;kind[i]=2}
+    while(i<nH+nE){const sd=R()<.5?-1:1,a=R()*6.283,b=R();put(sd*(.74+.05*Math.cos(a)),.04+.2*Math.sin(a)*Math.sqrt(b),-.05+.09*Math.cos(a)*Math.sqrt(b),0,.3)}
+    while(i<nH+nE+nY){const sd=R()<.5?-1:1,u=R()*2-1,a=R()*6.283,q=Math.sqrt(1-u*u);put(sd*.28+q*Math.cos(a)*.055,.12+u*.04,.7+q*Math.sin(a)*.04,3,1)}
+    while(i<nH+nE+nY+nN){const a=R()*6.283,y=-.75-R()*.65;put(Math.cos(a)*.3,y,Math.sin(a)*.27-.06,1,Math.max(0,Math.sin(a)))}
+    while(i<N){const t=Math.pow(R(),.8),y=-1.3-t*1.2,a=R()*6.283,w=.33+1.32*ss(0,.42,t),d=.3+.26*ss(0,.5,t);put(Math.cos(a)*w,y+(1-Math.abs(Math.cos(a)))*.05*ss(0,.3,t),Math.sin(a)*d-.05,2,Math.max(0,Math.sin(a)))}
     for(let j=0;j<N;j++){ph[j]=R()*6.283}
     function scatter(){for(let j=0;j<N;j++){const r=4+R()*5,a=R()*6.283,b=Math.acos(R()*2-1);pos[j*3]=r*Math.sin(b)*Math.cos(a);pos[j*3+1]=r*Math.cos(b);pos[j*3+2]=r*Math.sin(b)*Math.sin(a)}}
     scatter();
     const c=new T.Color();
-    window.holoRecolor=()=>{for(let j=0;j<N;j++){const y=tgt[j*3+1];if(kind[j]===2&&R()<.45)c.setHSL(((HUE+150)%360)/360,.9,.55+R()*.15);else c.setHSL(HUE/360,1,.45+Math.min(.35,(y+1.5)*.12)+R()*.08);colr[j*3]=c.r;colr[j*3+1]=c.g;colr[j*3+2]=c.b}if(geo)geo.attributes.color.needsUpdate=true};
+    window.holoRecolor=()=>{for(let j=0;j<N;j++){const y=tgt[j*3+1],sh=.3+.45*Math.max(0,nrm[j]);if(kind[j]===3)c.setHSL(HUE/360,1,.74);else if(kind[j]===2&&R()<.5)c.setHSL(((HUE+135)%360)/360,.9,.42+sh*.35);else c.setHSL(HUE/360,1,.3+sh*.55+Math.min(.12,(y+1)*.04)+R()*.05);colr[j*3]=c.r;colr[j*3+1]=c.g;colr[j*3+2]=c.b}if(geo)geo.attributes.color.needsUpdate=true};
     const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(pos,3));geo.setAttribute('color',new T.BufferAttribute(colr,3));window.holoRecolor();
     const spr=document.createElement('canvas');spr.width=spr.height=64;const sx=spr.getContext('2d');const sg=sx.createRadialGradient(32,32,0,32,32,32);sg.addColorStop(0,'rgba(255,255,255,1)');sg.addColorStop(.35,'rgba(255,255,255,.6)');sg.addColorStop(1,'rgba(255,255,255,0)');sx.fillStyle=sg;sx.fillRect(0,0,64,64);
-    const mat=new T.PointsMaterial({size:.045,map:new T.CanvasTexture(spr),vertexColors:true,transparent:true,depthWrite:false,blending:T.AdditiveBlending});
+    const mat=new T.PointsMaterial({size:.038,map:new T.CanvasTexture(spr),vertexColors:true,transparent:true,depthWrite:false,blending:T.AdditiveBlending});
     const pts=new T.Points(geo,mat);const grp=new T.Group();grp.add(pts);scene.add(grp);
     const sgeo=new T.BufferGeometry(),sp=new Float32Array(900*3);for(let j=0;j<900;j++){const r=25+R()*30,a=R()*6.283,b=Math.acos(R()*2-1);sp[j*3]=r*Math.sin(b)*Math.cos(a);sp[j*3+1]=r*Math.cos(b);sp[j*3+2]=r*Math.sin(b)*Math.sin(a)}
     sgeo.setAttribute('position',new T.BufferAttribute(sp,3));const stars=new T.Points(sgeo,new T.PointsMaterial({size:.12,color:0x8fb8d8,transparent:true,opacity:.5,depthWrite:false}));scene.add(stars);
-    const grid=new T.GridHelper(40,60,0x2a6d8f,0x123447);grid.position.y=-2.25;grid.material.transparent=true;grid.material.opacity=.35;scene.add(grid);
+    const grid=new T.GridHelper(40,60,0x2a6d8f,0x123447);grid.position.y=-1.95;grid.material.transparent=true;grid.material.opacity=.35;scene.add(grid);
     function size(){const w=box.clientWidth,h=box.clientHeight;if(!w||!h)return;ren.setSize(w,h,false);cam.aspect=w/h;cam.position.z=w/h<.8?9.2:7.4;cam.updateProjectionMatrix()}
     const hro=new ResizeObserver(size);hro.observe(box);size();
     window.holoAssemble=()=>{scatter();geo.attributes.position.needsUpdate=true};
@@ -604,13 +619,13 @@ function initHolo(){
       const k=.045,e=energy;
       for(let j=0;j<N;j++){const o=j*3;let tx=tgt[o],ty=tgt[o+1],tz=tgt[o+2];
         const w=Math.sin(t*1.3+ph[j])*.012;tx+=w;ty+=Math.cos(t*1.1+ph[j])*.012;
-        if(mouth[j]&&st==='speak')ty+=Math.sin(t*28+ph[j])*e*.07-e*.03;
+        if(mouth[j]&&st==='speak')ty-=(.5+.5*Math.sin(t*22))*e*.09;
         if(st==='listen'){const rr=Math.sin(t*5-ty*3)*.04;tx*=1+rr;tz*=1+rr}
         if(st==='think'){tx+=Math.sin(t*6+ph[j]*3)*.03;tz+=Math.cos(t*6+ph[j]*3)*.03}
         pos[o]+=(tx-pos[o])*k;pos[o+1]+=(ty-pos[o+1])*k;pos[o+2]+=(tz-pos[o+2])*k}
       geo.attributes.position.needsUpdate=true;
-      grp.rotation.y=Math.sin(t*.35)*.45;grp.position.y=Math.sin(t*.8)*.04;stars.rotation.y=t*.01;
-      mat.size=.045*(1+e*.4);ren.render(scene,cam)})();
+      grp.rotation.y=Math.sin(t*.3)*.55;grp.rotation.x=.05;grp.position.y=Math.sin(t*.8)*.04;stars.rotation.y=t*.01;
+      mat.size=.038*(1+e*.4);ren.render(scene,cam)})();
   })();
   return holoP;
 }
@@ -707,17 +722,20 @@ function beep(){try{const A=audioCtx();[0,.25,.5].forEach(d=>{const o=A.createOs
 let clapStream=null,clapIv=null,clapPaused=false;
 async function startClap(){
   if(!S.clap||clapStream)return;
-  try{clapStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})}catch(e){toast('Microfono negato: battito mani disattivato');S.clap=false;save();return}
-  const A=audioCtx(),src=A.createMediaStreamSource(clapStream),hp=A.createBiquadFilter();hp.type='highpass';hp.frequency.value=1500;
-  const an=A.createAnalyser();an.fftSize=512;src.connect(hp);hp.connect(an);const buf=new Float32Array(an.fftSize);
-  let floor=.01,prev=0,lastPeak=0,firstClap=0;
-  clapIv=setInterval(()=>{an.getFloatTimeDomainData(buf);let pk=0,sum=0;for(const v of buf){const a=Math.abs(v);if(a>pk)pk=a;sum+=v*v}const rms=Math.sqrt(sum/buf.length);
-    floor=floor*.98+Math.min(rms,.05)*.02;const now=performance.now();
-    const thr=Math.max(.06,floor*(14-S.clapS));
-    if(!clapPaused&&pk>thr*2.2&&rms>thr&&rms>prev*2.5&&now-lastPeak>140){lastPeak=now;
-      if(now-firstClap<750&&now-firstClap>160){firstClap=0;toast('👏👏 Ti ascolto');startListen()}else firstClap=now}
-    prev=rms},16);
+  try{clapStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})}
+  catch(e){toast('Microfono negato: battito mani disattivato');addMsg('sys','Battito di mani: permesso microfono negato.');S.clap=false;save();return}
+  const A=audioCtx(),src=A.createMediaStreamSource(clapStream),hp=A.createBiquadFilter();hp.type='highpass';hp.frequency.value=1000;
+  const an=A.createAnalyser();an.fftSize=1024;src.connect(hp);hp.connect(an);const buf=new Float32Array(an.fftSize);
+  let floor=.005,prevPk=0,lastPeak=0,firstClap=0;
+  $('#dot').classList.add('clap');
+  clapIv=setInterval(()=>{if(A.state!=='running')return;an.getFloatTimeDomainData(buf);let pk=0;for(let k=0;k<buf.length;k++){const a=Math.abs(buf[k]);if(a>pk)pk=a}
+    floor=floor*.995+Math.min(pk,.08)*.005;const now=performance.now();
+    const thr=Math.max(.32-S.clapS*.028,floor*4);
+    if(!clapPaused&&pk>thr&&pk>prevPk*2.2&&now-lastPeak>120){lastPeak=now;
+      if(now-firstClap<800&&now-firstClap>130){firstClap=0;toast('👏👏 Ti ascolto');startListen()}else{firstClap=now;flashDot()}}
+    prevPk=pk*.6+prevPk*.4},20);
 }
+function flashDot(){const d=$('#dot');d.style.transform='scale(2.2)';setTimeout(()=>d.style.transform='',160)}
 function stopClap(){clearInterval(clapIv);clapIv=null;if(clapStream){clapStream.getTracks().forEach(t=>t.stop());clapStream=null}}
 const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function pauseIdle(){clapPaused=true;if(isIOS)stopClap()}
@@ -731,9 +749,10 @@ async function startHands(){
     const vis=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs');
     const fs=await vis.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
     handLm=await vis.HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',delegate:'GPU'},runningMode:'VIDEO',numHands:1});
+    toast('Consenti la fotocamera nella barra degli indirizzi');
     handStream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}});
     const v=$('#camV');v.srcObject=handStream;await v.play();$('#cam').style.display='block';
-  }catch(e){handOn=false;toast('Controllo mani non disponibile');addMsg('sys','Controllo con le mani non avviato: serve la webcam e un browser recente (Chrome consigliato).');S.hands=false;save();return}
+  }catch(e){handOn=false;toast(/Permission|NotAllowed/i.test(e&&e.name||e)?'Fotocamera negata: consentila dal lucchetto accanto all\'indirizzo':'Controllo mani non disponibile');addMsg('sys','Controllo con le mani non avviato: serve la webcam e un browser recente (Chrome consigliato).');S.hands=false;save();return}
   toast('✋ Controllo mani attivo');
   const v=$('#camV'),cc=$('#camC'),cx=cc.getContext('2d'),hand=$('#hand');let lastT=-1,pinched=false,hist=[],lastSwipe=0,sx=0,sy=0;
   (function loop(){if(!handOn)return;requestAnimationFrame(loop);if(v.readyState<2||v.currentTime===lastT)return;lastT=v.currentTime;
@@ -746,8 +765,8 @@ async function startHands(){
     const pd=Math.hypot(lm[4].x-lm[8].x,lm[4].y-lm[8].y,(lm[4].z-lm[8].z));const isP=pd<.05;hand.classList.toggle('pinch',isP);
     if(isP&&!pinched){const el=document.elementFromPoint(X,Y);const b=el&&el.closest('button,.pn,.tab,a,input,.chip,#orb,.hit');if(b){b.click();beepShort(1500)}}
     pinched=isP;
-    const now=performance.now(),wx=1-lm[0].x;hist.push([now,wx]);hist=hist.filter(h=>now-h[0]<260);
-    if(hist.length>4&&now-lastSwipe>700&&!isP){const dx=wx-hist[0][1];if(Math.abs(dx)>.22){lastSwipe=now;hist=[];if(view==='panels')go(cur+(dx>0?-1:1));else{const o=['core','panels','holo','asst'];setView(o[(o.indexOf(view)+(dx>0?3:1))%4])}}}
+    const now=performance.now(),wx=1-lm[0].x;hist.push([now,wx]);hist=hist.filter(h=>now-h[0]<380);
+    if(hist.length>3&&now-lastSwipe>650&&!isP){const dx=wx-hist[0][1];if(Math.abs(dx)>.16){lastSwipe=now;hist=[];if(view==='panels')go(cur+(dx>0?-1:1));else{const o=['core','panels','holo','asst'];setView(o[(o.indexOf(view)+(dx>0?3:1))%4])}}}
   })();
 }
 function stopHands(){handOn=false;if(handStream)handStream.getTracks().forEach(t=>t.stop());handStream=null;$('#cam').style.display='none';$('#hand').style.display='none'}
@@ -966,6 +985,7 @@ buildRing();paintSpk();refreshStatus();renderHistory();setView(S.view||'core');r
 setInterval(loadWeather,15*60*1000);setInterval(loadMarkets,5*60*1000);
 if(!H.length)addMsg('sys','<b>Benvenuto.</b> Tocca ⚙ in alto, incolla la chiave gratuita di Gemini e premi “Collega”. Poi parlami con il microfono, la barra spaziatrice o un doppio battito di mani (da attivare nelle impostazioni). Tasti 1-4 per cambiare schermata.');
 if(!S.key)setTimeout(openSettings,700);
+['pointerdown','keydown','touchend'].forEach(ev=>document.addEventListener(ev,()=>{if(AC&&AC.state!=='running')AC.resume()},{passive:true}));
 const firstGesture=()=>{unlock();try{audioCtx()}catch(e){}if(S.clap)startClap();document.removeEventListener('pointerdown',firstGesture)};document.addEventListener('pointerdown',firstGesture);
 if(S.clap&&!isIOS)startClap();if(S.wake)setTimeout(startWake,1000);if(S.hands)setTimeout(startHands,800);
 if(location.hash==='#ascolta'){history.replaceState(null,'',location.pathname);setTimeout(()=>{toast('Ti ascolto…');startListen()},700)}
