@@ -1011,6 +1011,11 @@ if(!S.key)setTimeout(openSettings,700);
 ['pointerdown','keydown','touchend'].forEach(ev=>document.addEventListener(ev,()=>{if(AC&&AC.state!=='running')AC.resume()},{passive:true}));
 const firstGesture=()=>{unlock();try{audioCtx()}catch(e){}if(S.clap)startClap();document.removeEventListener('pointerdown',firstGesture)};document.addEventListener('pointerdown',firstGesture);
 if(S.clap&&!isIOS)startClap();if(S.wake)setTimeout(startWake,1000);if(S.hands)setTimeout(startHands,800);
+function bootFx(){const els=[...document.querySelectorAll('#ring .pn')];els.forEach(el=>{el.style.transition='none';el.style.opacity=0;el.style.transform='translate3d(0,0,-2200px) rotateY(80deg)'});
+  void document.body.offsetWidth;els.forEach((el,i)=>{el.style.transition='';el.style.transitionDelay=(i*90)+'ms'});layoutRing();setTimeout(()=>els.forEach(el=>el.style.transitionDelay=''),2000)}
+if(location.hash==='#saluta'){history.replaceState(null,'',location.pathname);setView('panels');requestAnimationFrame(bootFx);
+  const h=new Date().getHours(),g=h<6?'Buonanotte':h<13?'Buongiorno':h<18?'Buon pomeriggio':'Buonasera';cap('u','👏👏');cap('a',`${g}, ${S.title||'signore'}. Tutti i sistemi sono operativi. Come posso aiutarla?`);
+  setTimeout(()=>startListen(),4200)}
 if(location.hash==='#ascolta'){history.replaceState(null,'',location.pathname);setTimeout(()=>{toast('Ti ascolto…');startListen()},700)}
 window.addEventListener('online',renderAll);window.addEventListener('offline',renderAll);
 }
