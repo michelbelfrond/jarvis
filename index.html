@@ -72,11 +72,11 @@ button{cursor:pointer}
 .pn{position:absolute;left:50%;top:46%;width:var(--cw,300px);height:var(--ch,400px);margin:calc(var(--ch,400px)/-2) 0 0 calc(var(--cw,300px)/-2);
   border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;overflow:hidden;
   background:linear-gradient(160deg,hsla(var(--h),80%,40%,.16),hsla(var(--h),80%,10%,.55) 60%);border:1px solid var(--line);
-  box-shadow:0 0 0 1px hsla(var(--h),100%,70%,.05) inset,0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .7s,border-color .4s,box-shadow .4s;cursor:pointer;user-select:none;-webkit-user-select:none}
+  background-color:hsla(var(--h),60%,8%,.78);box-shadow:0 12px 30px rgba(0,0,0,.4);will-change:transform,opacity;
+  transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .45s,border-color .3s;cursor:pointer;user-select:none;-webkit-user-select:none}
 .pn::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:linear-gradient(115deg,transparent 30%,hsla(var(--h),100%,85%,.08) 45%,transparent 60%)}
-.pn.act{border-color:var(--gold);box-shadow:0 0 0 1px rgba(255,210,122,.35) inset,0 0 40px rgba(255,210,122,.22),0 20px 60px rgba(0,0,0,.5)}
+.pn.act{border-color:var(--gold);box-shadow:0 0 0 1px rgba(255,210,122,.35) inset,0 0 26px rgba(255,210,122,.2)}
 .pn.act::before{content:"";position:absolute;left:0;right:0;top:44%;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.0;animation:scan 2.4s ease-in-out infinite}
 @keyframes scan{0%{top:8%;opacity:0}20%{opacity:.8}100%{top:92%;opacity:0}}
 .pn:not(.act) .pn-b,.pn:not(.act) .pn-f{opacity:.45}
@@ -122,7 +122,7 @@ button{cursor:pointer}
 /* assistant */
 .asst{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1fr);gap:16px;padding:14px 4px;overflow-y:auto}
 .asst .col{display:flex;flex-direction:column;gap:12px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;position:relative;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.card{background:hsla(var(--h),60%,9%,.72);border:1px solid var(--line);border-radius:14px;padding:12px 14px;position:relative}
 .card h3{margin:0 0 6px;font:600 12px/1 var(--mono);letter-spacing:.2em;color:var(--dim);text-transform:uppercase;display:flex;justify-content:space-between}
 .amid{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding-top:6px}
 .greet{font:600 clamp(28px,3.4vw,40px)/1.05 var(--ui);color:#fff;margin:0}
@@ -168,8 +168,8 @@ button{cursor:pointer}
   background:rgba(2,14,24,.92);border:1px solid var(--cy);color:var(--cy2);padding:10px 16px;border-radius:12px;font:600 15px var(--ui);letter-spacing:.06em;transition:.3s}
 .toast.on{opacity:1;transform:translateX(-50%)}
 /* hand cursor + cam */
-#hand{position:fixed;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;border:2px solid var(--cy2);box-shadow:0 0 16px var(--cy);z-index:20;pointer-events:none;display:none;transition:transform .1s}
-#hand.pinch{transform:scale(.6);background:var(--cy)}
+#hand{position:fixed;left:0;top:0;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;border:2px solid var(--cy2);box-shadow:0 0 16px var(--cy);z-index:20;pointer-events:none;display:none;will-change:transform}
+#hand.pinch{background:var(--cy);border-width:6px}
 #handBadge{font-size:20px;opacity:.35;filter:grayscale(1);transition:.2s}#handBadge.on{opacity:1;filter:drop-shadow(0 0 6px var(--cy))}
 #hand.open{width:60px;height:60px;margin:-30px 0 0 -30px;border-style:dashed}
 #cam{position:fixed;left:calc(var(--safe-l) + 10px);bottom:calc(var(--safe-b) + 120px);width:150px;border-radius:12px;border:1px solid var(--line);z-index:7;display:none;overflow:hidden;background:#000}
@@ -485,9 +485,9 @@ function layoutRing(){
     el.style.opacity=a>2.5?0:1-a*.22;el.style.zIndex=10-a;el.style.pointerEvents=a>2.5?'none':'auto';el.classList.toggle('act',d===0)});
   document.querySelectorAll('#dots i').forEach((e,i)=>e.classList.toggle('on',i===cur));
 }
-function refreshPanelBodies(){
+function refreshPanelBodies(only){
   const act=document.activeElement;
-  document.querySelectorAll('#ring .pn').forEach(el=>{if(act&&el.contains(act))return;const p=PANELS[+el.dataset.i];if(!p)return;
+  document.querySelectorAll('#ring .pn').forEach(el=>{if(act&&el.contains(act))return;const p=PANELS[+el.dataset.i];if(!p||(only&&p.id!==only))return;
     el.querySelector('.pn-b').innerHTML=p.body();el.querySelector('.pn-f span:last-child').textContent=p.foot()});
 }
 function go(i,speak=false){const n=PANELS.length;cur=((i%n)+n)%n;layoutRing();renderHoloCard(PANELS[cur]);if(speak)say(PANELS[cur].say(),{force:false})}
@@ -574,9 +574,9 @@ function initHolo(){
     try{if(!window.THREE)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js')}catch(e){$('#holoMsg').textContent='Ologramma non disponibile (serve internet).';return}
     $('#holoMsg').hidden=true;
     const T=window.THREE,box=$('#holo');
-    const ren=new T.WebGLRenderer({antialias:true,alpha:true});ren.setPixelRatio(Math.min(devicePixelRatio||1,2));box.appendChild(ren.domElement);
+    const ren=new T.WebGLRenderer({antialias:false,alpha:true,powerPreference:'high-performance'});ren.setPixelRatio(Math.min(devicePixelRatio||1,1.5));box.appendChild(ren.domElement);
     const scene=new T.Scene();const cam=new T.PerspectiveCamera(38,1,.1,200);cam.position.set(0,.2,7.4);
-    const N=reduce?3500:7000,tgt=new Float32Array(N*3),pos=new Float32Array(N*3),colr=new Float32Array(N*3),ph=new Float32Array(N),mouth=new Uint8Array(N),kind=new Uint8Array(N);
+    const N=reduce?3000:5200,tgt=new Float32Array(N*3),pos=new Float32Array(N*3),colr=new Float32Array(N*3),ph=new Float32Array(N),mouth=new Uint8Array(N),kind=new Uint8Array(N);
     let i=0;const R=Math.random;const nrm=new Float32Array(N);
     const cl=(v,a,b)=>Math.max(a,Math.min(b,v)),ss=(a,b,v)=>{const t=cl((v-a)/(b-a),0,1);return t*t*(3-2*t)};
     const put=(x,y,z,k,n)=>{tgt[i*3]=x;tgt[i*3+1]=y+.72;tgt[i*3+2]=z;kind[i]=k;nrm[i]=n;i++};
@@ -761,15 +761,15 @@ async function startHands(){
   toast('✋ Controllo mani attivo');
   const v=$('#camV'),hand=$('#hand'),badge=$('#handBadge');let lastT=-1,pinched=false,sx=.5,sy=.5,anchor=null,lastStep=0;
   const ext=(lm,t,p)=>lm[t].y<lm[p].y-.02;
-  (function loop(){if(!handOn)return;requestAnimationFrame(loop);if(v.readyState<2||v.currentTime===lastT)return;lastT=v.currentTime;
+  let lastRun=0;(function loop(){if(!handOn)return;requestAnimationFrame(loop);const tnow=performance.now();if(document.hidden||tnow-lastRun<55||v.readyState<2||v.currentTime===lastT)return;lastRun=tnow;lastT=v.currentTime;
     const r=handLm.detectForVideo(v,performance.now());const lm=r.landmarks&&r.landmarks[0];
     if(!lm){hand.style.display='none';badge.classList.remove('on');anchor=null;return}
     badge.classList.add('on');
     const fingers=[ext(lm,8,6),ext(lm,12,10),ext(lm,16,14),ext(lm,20,18)];const open=fingers.filter(Boolean).length>=3;
     const px=1-(lm[0].x+lm[5].x+lm[9].x+lm[13].x+lm[17].x)/5,py=(lm[0].y+lm[9].y)/2;
-    const ix=open?px:1-lm[8].x,iy=open?py:lm[8].y;sx+=(ix-sx)*.35;sy+=(iy-sy)*.35;
+    const ix=open?px:1-lm[8].x,iy=open?py:lm[8].y;sx+=(ix-sx)*.5;sy+=(iy-sy)*.5;
     const X=Math.min(1,Math.max(0,(sx-.15)/.7))*innerWidth,Y=Math.min(1,Math.max(0,(sy-.15)/.65))*innerHeight;
-    hand.style.display='block';hand.style.left=X+'px';hand.style.top=Y+'px';hand.classList.toggle('open',open);
+    hand.style.display='block';hand.style.transform=`translate3d(${X}px,${Y}px,0)`;hand.classList.toggle('open',open);
     const now=performance.now();
     if(open){pinched=false;hand.classList.remove('pinch');
       if(!anchor)anchor=px;const dx=px-anchor;const step=view==='panels'?.11:.22;
@@ -923,8 +923,12 @@ setInterval(()=>{
   TIMERS=TIMERS.filter(tm=>{if(now>=tm.end){beep();const m=`${cap1(S.title||'')}${S.title?', ':''}il timer ${tm.label} è terminato.`;say(m,{force:true});addMsg('a','⏱ '+m);cap('a',m);notify(m);return false}return true});
   REM.forEach(r=>{if(r.at&&!r.done&&!r.fired&&now>=r.at){r.fired=true;saveR();beep();const m=`Promemoria: ${r.t}.`;say(m,{force:true});addMsg('a','🔔 '+m);cap('a',m);notify(m)}});
   $('#clock').textContent=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
-  if(view==='panels'||view==='asst'||view==='holo')renderAll();else tele();
+  tele();tickN++;
+  if(TIMERS.length||timerWas){refreshPanelBodies('timer');if(view==='asst')renderAsst();const hc=$('#holoCard .pn[data-id=timer] .pn-b');if(hc)hc.innerHTML=PANELS.find(p=>p.id==='timer').body()}
+  timerWas=TIMERS.length>0;
+  if(tickN%30===0){refreshPanelBodies('system');if(view==='asst')renderAsst()}
 },1000);
+let tickN=0,timerWas=false;
 
 /* =============== UI WIRING =============== */
 const inp=$('#inp');function autoH(){inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,120)+'px'}
@@ -1013,9 +1017,9 @@ const firstGesture=()=>{unlock();try{audioCtx()}catch(e){}if(S.clap)startClap();
 if(S.clap&&!isIOS)startClap();if(S.wake)setTimeout(startWake,1000);if(S.hands)setTimeout(startHands,800);
 function bootFx(){const els=[...document.querySelectorAll('#ring .pn')];els.forEach(el=>{el.style.transition='none';el.style.opacity=0;el.style.transform='translate3d(0,0,-2200px) rotateY(80deg)'});
   void document.body.offsetWidth;els.forEach((el,i)=>{el.style.transition='';el.style.transitionDelay=(i*90)+'ms'});layoutRing();setTimeout(()=>els.forEach(el=>el.style.transitionDelay=''),2000)}
-if(location.hash==='#saluta'){history.replaceState(null,'',location.pathname);setView('panels');requestAnimationFrame(bootFx);
-  const h=new Date().getHours(),g=h<6?'Buonanotte':h<13?'Buongiorno':h<18?'Buon pomeriggio':'Buonasera';cap('u','👏👏');cap('a',`${g}, ${S.title||'signore'}. Tutti i sistemi sono operativi. Come posso aiutarla?`);
-  setTimeout(()=>startListen(),4200)}
+function saluta(){if(!location.hash.startsWith('#saluta'))return;history.replaceState(null,'',location.pathname);setView('panels');requestAnimationFrame(bootFx);
+  const h=new Date().getHours(),g=h<6?'Buonanotte':h<13?'Buongiorno':h<18?'Buon pomeriggio':'Buonasera';const m=`${g}, ${S.title||'signore'}. Tutti i sistemi sono operativi. Come posso aiutarla?`;cap('u','👏👏');cap('a',m);setTimeout(()=>startListen(),4300)}
+saluta();window.addEventListener('hashchange',saluta);
 if(location.hash==='#ascolta'){history.replaceState(null,'',location.pathname);setTimeout(()=>{toast('Ti ascolto…');startListen()},700)}
 window.addEventListener('online',renderAll);window.addEventListener('offline',renderAll);
 }
